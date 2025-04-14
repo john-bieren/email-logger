@@ -10,7 +10,7 @@ import pandas as pd
 from pypdf import PdfReader
 from tqdm import tqdm
 
-from logger import configure_logger
+from exception_logger import configure_logger
 
 configure_logger()
 

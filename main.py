@@ -2,7 +2,6 @@
 
 '''Log email metadata into Excel'''
 
-import logging
 from datetime import datetime
 from os import listdir, path
 
@@ -83,8 +82,6 @@ def process_emls(eml_dir):
 
 def process_pdfs(pdf_dir, df):
     '''Log the pdfs from the given pdf folder'''
-    # mute incessant stdout warnings from pypdf
-    logging.getLogger("pypdf._reader").disabled = True
     pdfs_logged = non_pdfs = 0
     for file_name in tqdm(listdir(pdf_dir)):
         if file_name[-4:] != ".pdf":

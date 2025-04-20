@@ -31,7 +31,7 @@ def process_eml_line(line, df_row, recipients):
             # quotation marks added because some aliases might be 'last, first' and list is comma-delimited
             recipients += f', "{recipient.strip('<>"')}"'
     elif line.startswith("Subject:"):
-        df_row['E-Mail Subject'] = line[8:].strip()
+        df_row['Subject'] = line[8:].strip()
     elif line.startswith("Date:"):
         date_time = line.split(", ", maxsplit=1)[-1] # -1 to avoid IndexError if there's no comma
         date_time = date_time.split(" +", maxsplit=1)[0].split(" -", maxsplit=1)[0].strip()
@@ -61,7 +61,7 @@ def process_emls(eml_dir):
                         combined_line = ""
                         log_line = False
                     # if we have all the info that we want, we can move on from the file
-                    have_info = all(c in df_row.columns for c in ('Sender', 'E-Mail Subject', 'Date and Time'))
+                    have_info = all(c in df_row.columns for c in ('Sender', 'Subject', 'Date and Time'))
                     if recipients and have_info:
                         break
                     if any(line.startswith(s) for s in ('To:', 'CC:', 'Subject:', 'Date:')):
@@ -105,13 +105,13 @@ def save_xlsx(df, log_dir, page_count):
     if page_count:
         df = df.reindex(columns=[
                 'Message No.', 'Date and Time', 'Page Count', 'Sender', 'Recipient(s)',
-                'E-Mail Subject', 'Exemption', 'Legal Authority'
+                'Subject', 'Exemption', 'Legal Authority'
             ]
         )
     else:
         df = df.reindex(columns=[
                 'Message No.', 'Date and Time', 'Sender', 'Recipient(s)',
-                'E-Mail Subject', 'Exemption', 'Legal Authority'
+                'Subject', 'Exemption', 'Legal Authority'
             ]
         )
     spreadsheet_path = path.join(log_dir, "Exemption Log.xlsx")

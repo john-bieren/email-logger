@@ -115,10 +115,9 @@ def save_xlsx(df, log_dir, page_count):
     with pd.ExcelWriter(spreadsheet_path, engine='openpyxl', mode='w') as writer:
         df.to_excel(writer, header=True, index=False)
 
-def log_usage(start_time, emls_logged, pdfs_logged):
+def log_usage(start_time, run_time, emls_logged, pdfs_logged):
     '''Log start time, run time, .eml files logged, and .pdf files logged'''
     file_name = "usage_log.csv"
-    run_time = datetime.now() - start_time
     try:
         if path.isfile(file_name):
             with open(file_name, "a", encoding='UTF-8') as file:
@@ -160,7 +159,9 @@ def main():
 
     print("Saving spreadsheet")
     save_xlsx(df, log_dir, page_count)
-    log_usage(start_time, emls_logged, pdfs_logged)
+
+    run_time = datetime.now() - start_time
+    log_usage(start_time, run_time, emls_logged, pdfs_logged)
     print("Complete")
 
 if __name__ == "__main__":

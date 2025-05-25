@@ -13,30 +13,40 @@ from exception_logger import configure_logger
 
 configure_logger()
 
-def process_eml_line(line, df_row, recipients):
-    '''Get data from a reconstructed line from an .eml file'''
-    line = line.replace("\n", "").replace("\t", "")
-    if line.startswith("From:"):
-        # remove the <email> if there's an alias before it
-        if line[5:].split("<", maxsplit=1)[0].strip('" ') != "":
-            df_row['Sender'] = line[5:].split("<", maxsplit=1)[0].strip('" ')
+def main():
+    '''Create email log, log usage info'''
+    eml_dir = input("Enter the full path to the folder that contains the \033[1mEMLs\033[0m: ").strip('"')
+    pdf_dir = input("Enter the full path to the folder that contains the \033[1mPDFs\033[0m (or press enter to skip): ").strip('"')
+    log_dir = input("Enter the full path to the folder where the log should be saved: ").strip('"')
+    start_time = datetime.now()
+
+    print("Processing .eml files")
+    df, emls_logged, non_emls = process_emls(eml_dir)
+    if emls_logged == 0:
+        raise ValueError(f'directory "{eml_dir}" contains no .eml files')
+    if non_emls > 0:
+        print(f"Processed {emls_logged} EMLs, skipped {non_emls} other files")
+    else:
+        print(f"Processed {emls_logged} EMLs")
+
+    if pdf_dir == "":
+        page_count = False
+        pdfs_logged = 0
+    else:
+        page_count = True
+        print("Processing .pdf files")
+        df, pdfs_logged, non_pdfs = process_pdfs(pdf_dir, df)
+        if non_pdfs > 0:
+            print(f"Processed {pdfs_logged} PDFs, skipped {non_pdfs} other files")
         else:
-            df_row['Sender'] = line[5:].strip('" <>')
-    elif line.startswith("To: ") or line.startswith("CC: "):
-        for recipient in line[4:].split(">, "):
-            # remove the <email> if there's an alias before it
-            if recipient.split("<", maxsplit=1)[0].strip('" ') != "":
-                recipient = f'{recipient.split("<", maxsplit=1)[0].strip('" ')}'
-            # quotation marks added because aliases might be "last, first"
-            recipients += f', "{recipient.strip('<>"')}"'
-    elif line.startswith("Subject:"):
-        df_row['Subject'] = line[8:].strip()
-    elif line.startswith("Date:"):
-        date_time = line.split(", ", maxsplit=1)[-1] # -1 to avoid IndexError if there's no comma
-        date_time = date_time.split(" +", maxsplit=1)[0].split(" -", maxsplit=1)[0].strip()
-        day, month, the_rest = date_time.split(" ", maxsplit=2)
-        df_row['Date and Time'] = f"{month} {day} {the_rest}"
-    return df_row, recipients
+            print(f"Processed {pdfs_logged} PDFs")
+
+    print("Saving spreadsheet")
+    save_xlsx(df, log_dir, page_count)
+
+    run_time = datetime.now() - start_time
+    log_usage(start_time, run_time, emls_logged, pdfs_logged, eml_dir, pdf_dir, log_dir)
+    print("Complete")
 
 def process_emls(eml_dir):
     '''Parse .eml file by combining wrapped lines, collect the data'''
@@ -79,6 +89,31 @@ def process_emls(eml_dir):
         df = pd.concat((df, df_row))
         emls_logged += 1
     return df, emls_logged, non_emls
+
+def process_eml_line(line, df_row, recipients):
+    '''Get data from a reconstructed line from an .eml file'''
+    line = line.replace("\n", "").replace("\t", "")
+    if line.startswith("From:"):
+        # remove the <email> if there's an alias before it
+        if line[5:].split("<", maxsplit=1)[0].strip('" ') != "":
+            df_row['Sender'] = line[5:].split("<", maxsplit=1)[0].strip('" ')
+        else:
+            df_row['Sender'] = line[5:].strip('" <>')
+    elif line.startswith("To: ") or line.startswith("CC: "):
+        for recipient in line[4:].split(">, "):
+            # remove the <email> if there's an alias before it
+            if recipient.split("<", maxsplit=1)[0].strip('" ') != "":
+                recipient = f'{recipient.split("<", maxsplit=1)[0].strip('" ')}'
+            # quotation marks added because aliases might be "last, first"
+            recipients += f', "{recipient.strip('<>"')}"'
+    elif line.startswith("Subject:"):
+        df_row['Subject'] = line[8:].strip()
+    elif line.startswith("Date:"):
+        date_time = line.split(", ", maxsplit=1)[-1] # -1 to avoid IndexError if there's no comma
+        date_time = date_time.split(" +", maxsplit=1)[0].split(" -", maxsplit=1)[0].strip()
+        day, month, the_rest = date_time.split(" ", maxsplit=2)
+        df_row['Date and Time'] = f"{month} {day} {the_rest}"
+    return df_row, recipients
 
 def process_pdfs(pdf_dir, df):
     '''Log the pdfs from the given pdf folder'''
@@ -128,41 +163,6 @@ def log_usage(start_time, run_time, emls_logged, pdfs_logged, eml_dir, pdf_dir, 
                 file.write(f'{start_time},{run_time},{emls_logged},{pdfs_logged},"{eml_dir}","{pdf_dir}","{log_dir}"\n')
     except PermissionError:
         pass
-
-def main():
-    '''Create email log, log usage info'''
-    eml_dir = input("Enter the full path to the folder that contains the \033[1mEMLs\033[0m: ").strip('"')
-    pdf_dir = input("Enter the full path to the folder that contains the \033[1mPDFs\033[0m (or press enter to skip): ").strip('"')
-    log_dir = input("Enter the full path to the folder where the log should be saved: ").strip('"')
-    start_time = datetime.now()
-
-    print("Processing .eml files")
-    df, emls_logged, non_emls = process_emls(eml_dir)
-    if emls_logged == 0:
-        raise ValueError(f'directory "{eml_dir}" contains no .eml files')
-    if non_emls > 0:
-        print(f"Processed {emls_logged} EMLs, skipped {non_emls} other files")
-    else:
-        print(f"Processed {emls_logged} EMLs")
-
-    if pdf_dir == "":
-        page_count = False
-        pdfs_logged = 0
-    else:
-        page_count = True
-        print("Processing .pdf files")
-        df, pdfs_logged, non_pdfs = process_pdfs(pdf_dir, df)
-        if non_pdfs > 0:
-            print(f"Processed {pdfs_logged} PDFs, skipped {non_pdfs} other files")
-        else:
-            print(f"Processed {pdfs_logged} PDFs")
-
-    print("Saving spreadsheet")
-    save_xlsx(df, log_dir, page_count)
-
-    run_time = datetime.now() - start_time
-    log_usage(start_time, run_time, emls_logged, pdfs_logged, eml_dir, pdf_dir, log_dir)
-    print("Complete")
 
 if __name__ == "__main__":
     main()

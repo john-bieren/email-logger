@@ -27,7 +27,7 @@ def process_eml_line(line, df_row, recipients):
             # remove the <email> if there's an alias before it
             if recipient.split("<", maxsplit=1)[0].strip('" ') != "":
                 recipient = f'{recipient.split("<", maxsplit=1)[0].strip('" ')}'
-            # quotation marks added because some aliases might be 'last, first' and list is comma-delimited
+            # quotation marks added because aliases might be "last, first"
             recipients += f', "{recipient.strip('<>"')}"'
     elif line.startswith("Subject:"):
         df_row['Subject'] = line[8:].strip()
@@ -115,17 +115,17 @@ def save_xlsx(df, log_dir, page_count):
     with pd.ExcelWriter(spreadsheet_path, engine='openpyxl', mode='w') as writer:
         df.to_excel(writer, header=True, index=False)
 
-def log_usage(start_time, run_time, emls_logged, pdfs_logged):
-    '''Log start time, run time, .eml files logged, and .pdf files logged'''
+def log_usage(start_time, run_time, emls_logged, pdfs_logged, eml_dir, pdf_dir, log_dir):
+    '''Log info about the usage of the program'''
     file_name = "usage_log.csv"
     try:
         if path.isfile(file_name):
             with open(file_name, "a", encoding='UTF-8') as file:
-                file.write(f"{start_time},{run_time},{emls_logged},{pdfs_logged}\n")
+                file.write(f'{start_time},{run_time},{emls_logged},{pdfs_logged},"{eml_dir}","{pdf_dir}","{log_dir}"\n')
         else:
             with open(file_name, "x", encoding='UTF-8') as file:
-                file.write("start time,run time,emls logged,pdfs logged\n")
-                file.write(f"{start_time},{run_time},{emls_logged},{pdfs_logged}\n")
+                file.write("start time,run time,emls logged,pdfs logged,eml directory,pdf directory,log directory\n")
+                file.write(f'{start_time},{run_time},{emls_logged},{pdfs_logged},"{eml_dir}","{pdf_dir}","{log_dir}"\n')
     except PermissionError:
         pass
 
@@ -161,7 +161,7 @@ def main():
     save_xlsx(df, log_dir, page_count)
 
     run_time = datetime.now() - start_time
-    log_usage(start_time, run_time, emls_logged, pdfs_logged)
+    log_usage(start_time, run_time, emls_logged, pdfs_logged, eml_dir, pdf_dir, log_dir)
     print("Complete")
 
 if __name__ == "__main__":

@@ -15,13 +15,13 @@ class ExtraNewlineFormatter(logging.Formatter):
 def configure_logger():
     '''Set up the root logger for logging uncaught exceptions'''
     logger = logging.getLogger()
+    logger.setLevel(logging.ERROR) # disable warnings from pypdf
 
-    if not logger.hasHandlers():
-        logger.setLevel(logging.ERROR)
-        file_handler = logging.FileHandler("exceptions.log", mode='a')
-        formatter = ExtraNewlineFormatter('%(asctime)s')
-        file_handler.setFormatter(formatter)
-        logger.addHandler(file_handler)
+    # set up file handler
+    file_handler = logging.FileHandler("exceptions.log", mode='a')
+    formatter = ExtraNewlineFormatter('%(asctime)s')
+    file_handler.setFormatter(formatter)
+    logger.addHandler(file_handler)
 
     def handle_exception(exc_type, exc_value, exc_traceback):
         '''Function to wrap uncaught exceptions so they can be logged'''

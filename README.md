@@ -8,9 +8,13 @@ Clone the repository:
 ```
 git clone https://github.com/john-bieren/email-logger.git
 ```
+Install dependencies:
+```
+& ./update.ps1
+```
 **Note**: The tags in this repository do not correspond to releases, they simply indicate breaking changes.
 
-For ease of use, desktop shortcuts to `email_logger.ps1` and `update.ps1` can be created. `email_logger.ps1` allows the script to be run without using the terminal, and includes a pause statement so that the output can be read before closing the window. `update.ps1` automates the process of keeping the repository and its dependencies up to date. For these to work, make sure that the shortcuts start in the project directory.
+For ease of use, desktop shortcuts to `email_logger.ps1` and `update.ps1` can be created. `email_logger.ps1` allows the script to be run without using the terminal, and includes a pause statement so that the output can be read before closing the window. `update.ps1` automates the process of keeping the repository and its dependencies up to date. Make sure that the shortcuts start in the project directory.
 
 ## Usage
 

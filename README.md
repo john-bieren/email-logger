@@ -4,12 +4,10 @@ A Python script that uses .eml files to create a log (in Excel .xlsx format) of 
 
 ## Install
 
-Clone the repository:
+Clone the repository and install dependencies:
 ```
 git clone https://github.com/john-bieren/email-logger.git
-```
-Install dependencies:
-```
+cd email-logger
 & ./update.ps1
 ```
 **Note**: The tags in this repository do not correspond to releases, they simply indicate breaking changes.

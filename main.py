@@ -115,7 +115,7 @@ def process_eml_line(line, df_row, recipients):
             alias = recipient.split("<", maxsplit=1)[0].strip('" ')
             if alias != "":
                 recipient = alias
-            # quotation marks added because aliases might include commas which mess up CSV output
+            # quotation marks added because aliases might include commas
             recipients += f'"{recipient.strip('<" ')}", '
 
     elif line.startswith("Subject:"):
@@ -150,16 +150,14 @@ def process_pdfs(pdf_dir, df):
 
 def save_xlsx(df, log_dir, have_page_count):
     """Reindex the dataframe and save it to an Excel spreadsheet"""
-    if have_page_count:
-        df = df.reindex(columns=[
-            "Message No.", "Date and Time", "Page Count", "Sender", "Recipient(s)",
-            "Subject", "Exemption", "Legal Authority"
-        ])
-    else:
-        df = df.reindex(columns=[
-            "Message No.", "Date and Time", "Sender", "Recipient(s)",
-            "Subject", "Exemption", "Legal Authority"
-        ])
+    columns = [
+        "Message No.", "Date and Time", "Page Count", "Sender", "Recipient(s)",
+        "Subject", "Exemption", "Legal Authority"
+    ]
+    if not have_page_count:
+        columns.remove("Page Count")
+    df = df.reindex(columns=columns)
+
     spreadsheet_path = path.join(log_dir, "Exemption Log.xlsx")
     with pd.ExcelWriter(spreadsheet_path, engine="openpyxl", mode="w") as writer:
         df.to_excel(writer, header=True, index=False)
@@ -167,14 +165,16 @@ def save_xlsx(df, log_dir, have_page_count):
 def log_usage(start_time, run_time, emls_logged, pdfs_logged, eml_dir, pdf_dir, log_dir):
     """Log info about the usage of the program"""
     file_name = "usage_log.csv"
+    cols_line = "Start Time,Run Time,EMLs Logged,PDFs Logged,EML Directory,PDF Directory,Log Directory\n"
+    log_line = f'{start_time},{run_time},{emls_logged},{pdfs_logged},"{eml_dir}","{pdf_dir}","{log_dir}"\n'
+
     try:
         if path.isfile(file_name):
             with open(file_name, "a", encoding="UTF-8") as file:
-                file.write(f'{start_time},{run_time},{emls_logged},{pdfs_logged},"{eml_dir}","{pdf_dir}","{log_dir}"\n')
+                file.write(log_line)
         else:
             with open(file_name, "x", encoding="UTF-8") as file:
-                file.write("Start Time,Run Time,EMLs Logged,PDFs Logged,EML Directory,PDF Directory,Log Directory\n")
-                file.write(f'{start_time},{run_time},{emls_logged},{pdfs_logged},"{eml_dir}","{pdf_dir}","{log_dir}"\n')
+                file.write(cols_line + log_line)
     except PermissionError:
         print(f"Usage not logged: {file_name} is open")
 

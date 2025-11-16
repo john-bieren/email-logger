@@ -124,9 +124,7 @@ def process_eml_line(line, df_row, recipients):
     elif line.startswith("Date:"):
         # format should be "day, dd mmm yyyy hh:mm:ss +0000", though it could be shorter
         date_time = line.split(", ", maxsplit=1)[-1] # -1 to avoid IndexError if day isn't listed
-        # remove UTC adjustments, if there are any
-        date_time = date_time.split(" +", maxsplit=1)[0].split(" -", maxsplit=1)[0].strip()
-        day, month, the_rest = date_time.split(" ", maxsplit=2)
+        day, month, the_rest = date_time.strip().split(" ", maxsplit=2)
         df_row["Date and Time"] = f"{month} {day} {the_rest}"
     return df_row, recipients
 

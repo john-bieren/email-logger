@@ -10,7 +10,7 @@ python -m pip install --upgrade pip
 $Dependencies = @(
     "openpyxl>=3.1.5,<4.0.0",
     "pandas>=2.3.3,<3.0.0",
-    "pypdf>=6.1.3,<7.0.0",
+    "pypdf>=6.4.0,<7.0.0",
     "tqdm>=4.67.1,<5.0.0"
 )
 foreach ($item in $Dependencies) {

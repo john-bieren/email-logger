@@ -8,11 +8,11 @@ import sys
 
 class ExtraNewlineFormatter(logging.Formatter):
     """Wrapper for logging.Formatter to add newlines after log entries"""
-    def format(self, record):
+    def format(self, record: logging.LogRecord) -> str:
         original = super().format(record)
         return f"{original}\n"
 
-def configure_logger():
+def configure_logger() -> None:
     """Set up the root logger for logging uncaught exceptions"""
     logger = logging.getLogger()
     logger.setLevel(logging.ERROR) # disable warnings from pypdf

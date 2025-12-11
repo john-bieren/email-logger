@@ -2,18 +2,18 @@
 
 """Log email metadata into Excel"""
 
-from datetime import datetime
-from os import listdir, path
+import os
+from datetime import datetime, timedelta
 
 import pandas as pd
-from pypdf import PdfReader
+import pypdf
 from tqdm import tqdm
 
 from exception_logger import configure_logger
 
 configure_logger()
 
-def main():
+def main() -> None:
     """Create email log, log usage info"""
     eml_dir = input("Enter the full path to the folder that contains the \033[1mEMLs\033[0m: ").strip('"')
     pdf_dir = input("Enter the full path to the folder that contains the \033[1mPDFs\033[0m (or press enter to skip): ").strip('"')
@@ -48,18 +48,18 @@ def main():
     log_usage(start_time, run_time, emls_logged, pdfs_logged, eml_dir, pdf_dir, log_dir)
     print("Complete")
 
-def process_emls(eml_dir):
+def process_emls(eml_dir: str) -> tuple[pd.DataFrame, int, int]:
     """Parse, log the .eml files from the given .eml directory"""
     df = pd.DataFrame()
     emls_logged = non_emls = 0
-    for file_name in tqdm(listdir(eml_dir)):
+    for file_name in tqdm(os.listdir(eml_dir)):
         if file_name[-4:] != ".eml":
             non_emls += 1
             continue
 
         try:
             df_row = pd.DataFrame([file_name[:-4]], columns=["Message No."])
-            file_path = path.join(eml_dir, file_name)
+            file_path = os.path.join(eml_dir, file_name)
             recipients = combined_line = ""
             log_line = found_first_from_line = False
 
@@ -99,7 +99,7 @@ def process_emls(eml_dir):
         emls_logged += 1
     return df, emls_logged, non_emls
 
-def process_eml_line(line, df_row, recipients):
+def process_eml_line(line: str, df_row: pd.DataFrame, recipients: str) -> tuple[pd.DataFrame, str]:
     """Get data from a reconstructed line from an .eml file"""
     line = line.replace("\n", "").replace("\t", "")
     # format is "alias, <email>"; log the alias unless there isn't one
@@ -128,17 +128,17 @@ def process_eml_line(line, df_row, recipients):
         df_row["Date and Time"] = f"{month} {day} {the_rest}"
     return df_row, recipients
 
-def process_pdfs(pdf_dir, df):
+def process_pdfs(pdf_dir: str, df: pd.DataFrame) -> tuple[pd.DataFrame, int, int]:
     """Log the PDF page counts from the given PDF directory"""
     pdfs_logged = non_pdfs = 0
-    for file_name in tqdm(listdir(pdf_dir)):
+    for file_name in tqdm(os.listdir(pdf_dir)):
         if file_name[-4:] != ".pdf":
             non_pdfs += 1
             continue
 
-        file_path = path.join(pdf_dir, file_name)
+        file_path = os.path.join(pdf_dir, file_name)
         try:
-            reader = PdfReader(file_path)
+            reader = pypdf.PdfReader(file_path)
             page_count = len(reader.pages)
             df.loc[df["Message No."] == file_name[:-4], "Page Count"] = page_count
             pdfs_logged += 1
@@ -146,7 +146,7 @@ def process_pdfs(pdf_dir, df):
             raise Exception(f"error thorwn while parsing {file_name}") from exc
     return df, pdfs_logged, non_pdfs
 
-def save_xlsx(df, log_dir, have_page_count):
+def save_xlsx(df: pd.DataFrame, log_dir: str, have_page_count: bool) -> None:
     """Reindex the dataframe and save it to an Excel spreadsheet"""
     columns = [
         "Message No.", "Date and Time", "Page Count", "Sender", "Recipient(s)",
@@ -156,18 +156,26 @@ def save_xlsx(df, log_dir, have_page_count):
         columns.remove("Page Count")
     df = df.reindex(columns=columns)
 
-    spreadsheet_path = path.join(log_dir, "Exemption Log.xlsx")
+    spreadsheet_path = os.path.join(log_dir, "Exemption Log.xlsx")
     with pd.ExcelWriter(spreadsheet_path, engine="openpyxl", mode="w") as writer:
         df.to_excel(writer, header=True, index=False)
 
-def log_usage(start_time, run_time, emls_logged, pdfs_logged, eml_dir, pdf_dir, log_dir):
+def log_usage(
+        start_time: datetime,
+        run_time: timedelta,
+        emls_logged: int,
+        pdfs_logged: int,
+        eml_dir: str,
+        pdf_dir: str,
+        log_dir: str
+        ) -> None:
     """Log info about the usage of the program"""
     file_name = "usage_log.csv"
     cols_line = "Start Time,Run Time,EMLs Logged,PDFs Logged,EML Directory,PDF Directory,Log Directory\n"
     log_line = f'{start_time},{run_time},{emls_logged},{pdfs_logged},"{eml_dir}","{pdf_dir}","{log_dir}"\n'
 
     try:
-        if path.isfile(file_name):
+        if os.path.isfile(file_name):
             with open(file_name, "a", encoding="UTF-8") as file:
                 file.write(log_line)
         else:

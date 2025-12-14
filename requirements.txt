@@ -1,13 +1,11 @@
-# use update.ps1 instead of this if you can,
-# this exists to get depandabot alerts for minimum dependency versions
 colorama==0.4.6
 et_xmlfile==2.0.0
-numpy==2.3.4
+numpy==2.3.5
 openpyxl==3.1.5
 pandas==2.3.3
-pypdf==6.4.0
+pypdf==6.4.1
 python-dateutil==2.9.0.post0
 pytz==2025.2
 six==1.17.0
 tqdm==4.67.1
-tzdata==2025.2
+tzdata==2025.3

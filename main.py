@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-"""Log email metadata into Excel"""
+"""Logs email metadata into Excel."""
 
 import os
 from datetime import datetime, timedelta
@@ -13,11 +13,18 @@ from exception_logger import configure_logger
 
 configure_logger()
 
+
 def main() -> None:
-    """Create email log, log usage info"""
-    eml_dir = input("Enter the full path to the folder that contains the \033[1mEMLs\033[0m: ").strip('"')
-    pdf_dir = input("Enter the full path to the folder that contains the \033[1mPDFs\033[0m (or press enter to skip): ").strip('"')
-    log_dir = input("Enter the full path to the folder where the log should be saved: ").strip('"')
+    """Logs email metadata into Excel."""
+    eml_dir = input(
+        "Enter the full path to the folder that contains the \033[1mEMLs\033[0m: "
+    ).strip('"')
+    pdf_dir = input(
+        "Enter the full path to the folder that contains the \033[1mPDFs\033[0m (or press enter to skip): "
+    ).strip('"')
+    log_dir = input(
+        "Enter the full path to the folder where the log should be saved: "
+    ).strip('"')
     start_time = datetime.now()
 
     print("Processing .eml files")
@@ -48,8 +55,9 @@ def main() -> None:
     log_usage(start_time, run_time, emls_logged, pdfs_logged, eml_dir, pdf_dir, log_dir)
     print("Complete")
 
+
 def process_emls(eml_dir: str) -> tuple[pd.DataFrame, int, int]:
-    """Parse, log the .eml files from the given .eml directory"""
+    """Parses and logs the .eml files from the given .eml directory."""
     df = pd.DataFrame()
     emls_logged = non_emls = 0
     for file_name in tqdm(os.listdir(eml_dir)):
@@ -69,17 +77,25 @@ def process_emls(eml_dir: str) -> tuple[pd.DataFrame, int, int]:
                     # log or discard the combined prior line if this line isn't a continuation of it
                     if line[0] not in (" ", "\n", "\t"):
                         if log_line:
-                            df_row, recipients = process_eml_line(combined_line, df_row, recipients)
+                            df_row, recipients = process_eml_line(
+                                combined_line, df_row, recipients
+                            )
                         combined_line = ""
                         log_line = False
 
                     # if we have all the info that we want, we can move on from the file
-                    have_info = all(c in df_row.columns for c in ("Sender", "Subject", "Date and Time"))
+                    have_info = all(
+                        col in df_row.columns
+                        for col in ("Sender", "Subject", "Date and Time")
+                    )
                     if recipients != "" and have_info:
                         break
 
                     # identify information which is part of the log
-                    if any(line.startswith(s) for s in ("To:", "CC:", "Subject:", "Date:")):
+                    if any(
+                        line.startswith(label)
+                        for label in ("To:", "CC:", "Subject:", "Date:")
+                    ):
                         log_line = True
                     elif line.startswith("From:"):
                         log_line = True
@@ -92,15 +108,20 @@ def process_emls(eml_dir: str) -> tuple[pd.DataFrame, int, int]:
                     # combine multi-line items before processing them
                     combined_line += line
         except Exception as exc:
-            raise Exception(f"error thorwn while parsing {file_name}") from exc
+            raise Exception(f"error thrown while parsing {file_name}") from exc
 
         df_row["Recipient(s)"] = recipients.strip(", ")
         df = pd.concat((df, df_row))
         emls_logged += 1
     return df, emls_logged, non_emls
 
-def process_eml_line(line: str, df_row: pd.DataFrame, recipients: str) -> tuple[pd.DataFrame, str]:
-    """Get data from a reconstructed line from an .eml file"""
+
+def process_eml_line(
+    line: str,
+    df_row: pd.DataFrame,
+    recipients: str,
+) -> tuple[pd.DataFrame, str]:
+    """Gets data from a reconstructed line from an .eml file."""
     line = line.replace("\n", "").replace("\t", "")
     # format is "alias, <email>"; log the alias unless there isn't one
     if line.startswith("From:"):
@@ -123,13 +144,14 @@ def process_eml_line(line: str, df_row: pd.DataFrame, recipients: str) -> tuple[
 
     elif line.startswith("Date:"):
         # format should be "day, dd mmm yyyy hh:mm:ss +0000", though it could be shorter
-        date_time = line.split(", ", maxsplit=1)[-1] # -1 to avoid IndexError if day isn't listed
+        date_time = line.split(", ", maxsplit=1)[-1]  # -1 in case day isn't listed
         day, month, the_rest = date_time.strip().split(" ", maxsplit=2)
         df_row["Date and Time"] = f"{month} {day} {the_rest}"
     return df_row, recipients
 
+
 def process_pdfs(pdf_dir: str, df: pd.DataFrame) -> tuple[pd.DataFrame, int, int]:
-    """Log the PDF page counts from the given PDF directory"""
+    """Logs the PDF page counts from the given PDF directory."""
     pdfs_logged = non_pdfs = 0
     for file_name in tqdm(os.listdir(pdf_dir)):
         if file_name[-4:] != ".pdf":
@@ -143,14 +165,21 @@ def process_pdfs(pdf_dir: str, df: pd.DataFrame) -> tuple[pd.DataFrame, int, int
             df.loc[df["Message No."] == file_name[:-4], "Page Count"] = page_count
             pdfs_logged += 1
         except Exception as exc:
-            raise Exception(f"error thorwn while parsing {file_name}") from exc
+            raise Exception(f"error thrown while parsing {file_name}") from exc
     return df, pdfs_logged, non_pdfs
 
+
 def save_xlsx(df: pd.DataFrame, log_dir: str, have_page_count: bool) -> None:
-    """Reindex the dataframe and save it to an Excel spreadsheet"""
+    """Saves the dataframe as an Excel spreadsheet."""
     columns = [
-        "Message No.", "Date and Time", "Page Count", "Sender", "Recipient(s)",
-        "Subject", "Exemption", "Legal Authority"
+        "Message No.",
+        "Date and Time",
+        "Page Count",
+        "Sender",
+        "Recipient(s)",
+        "Subject",
+        "Exemption",
+        "Legal Authority",
     ]
     if not have_page_count:
         columns.remove("Page Count")
@@ -160,16 +189,17 @@ def save_xlsx(df: pd.DataFrame, log_dir: str, have_page_count: bool) -> None:
     with pd.ExcelWriter(spreadsheet_path, engine="openpyxl", mode="w") as writer:
         df.to_excel(writer, header=True, index=False)
 
+
 def log_usage(
-        start_time: datetime,
-        run_time: timedelta,
-        emls_logged: int,
-        pdfs_logged: int,
-        eml_dir: str,
-        pdf_dir: str,
-        log_dir: str
-        ) -> None:
-    """Log info about the usage of the program"""
+    start_time: datetime,
+    run_time: timedelta,
+    emls_logged: int,
+    pdfs_logged: int,
+    eml_dir: str,
+    pdf_dir: str,
+    log_dir: str,
+) -> None:
+    """Logs info about the usage of the program."""
     file_name = "usage_log.csv"
     cols_line = "Start Time,Run Time,EMLs Logged,PDFs Logged,EML Directory,PDF Directory,Log Directory\n"
     log_line = f'{start_time},{run_time},{emls_logged},{pdfs_logged},"{eml_dir}","{pdf_dir}","{log_dir}"\n'
@@ -183,6 +213,7 @@ def log_usage(
                 file.write(cols_line + log_line)
     except PermissionError:
         print(f"Usage not logged: {file_name} is open")
+
 
 if __name__ == "__main__":
     main()

@@ -5,9 +5,14 @@
 
 A Python script that uses .eml files (EMLs) to create a log (in Excel .xlsx format) of sender,
 recipients (including CCs), subject line, and time sent for a given set of emails. Optionally,
-converted PDF versions of the emails can be used to add the PDF page count of each email to the log.
+PDF versions of the emails can be used to add the PDF page count of each email to the log.
 
 ## Install
+
+> [!IMPORTANT]
+> `email_logger.ps1` and `update.ps1` will not work on operating systems other than Windows. If you
+use a different operating system, all Python code will still work as intended, but you'll need to
+manage dependencies and updates yourself.
 
 Clone the repository and install dependencies:
 
@@ -17,14 +22,17 @@ cd email-logger
 & ./update.ps1
 ```
 
-**Note**: The tags in this repository do not correspond to releases, they simply indicate breaking
-changes.
+If you wish to install development dependencies, you can use `requirements-dev.txt`.
 
 For ease of use, desktop shortcuts to `email_logger.ps1` and `update.ps1` can be created.
 `email_logger.ps1` allows the script to be run in a virtual environment without using the terminal,
 and includes a pause statement so that the output can be read before the window closes. `update.ps1`
 automates the process of setting up the virtual environment and keeping the repository and its
 dependencies up to date. Make sure that the shortcuts start in the project directory.
+
+> [!NOTE]
+> The tags in this repository do not correspond to releases, instead they indicate the conclusion of
+a series of breaking changes.
 
 ## Usage
 

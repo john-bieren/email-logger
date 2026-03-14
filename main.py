@@ -27,7 +27,7 @@ def main() -> None:
     ).strip('"')
     start_time = datetime.now()
 
-    print("Processing .eml files")
+    print("Processing EMLs")
     df, emls_logged, non_emls = process_emls(eml_dir)
     if emls_logged == 0:
         raise ValueError(f"{eml_dir} contains no .eml files")
@@ -41,7 +41,7 @@ def main() -> None:
         pdfs_logged = 0
     else:
         have_page_count = True
-        print("Processing PDF files")
+        print("Processing PDFs")
         df, pdfs_logged, non_pdfs = process_pdfs(pdf_dir, df)
         if non_pdfs > 0:
             print(f"Processed {pdfs_logged} PDFs, skipped {non_pdfs} other files")
@@ -57,7 +57,7 @@ def main() -> None:
 
 
 def process_emls(eml_dir: str) -> tuple[pd.DataFrame, int, int]:
-    """Parses and logs the .eml files from the given .eml directory."""
+    """Parses and logs the EMLs from the given EML directory."""
     df = pd.DataFrame()
     emls_logged = non_emls = 0
     for file_name in tqdm(os.listdir(eml_dir)):
@@ -121,7 +121,7 @@ def process_eml_line(
     df_row: pd.DataFrame,
     recipients: str,
 ) -> tuple[pd.DataFrame, str]:
-    """Gets data from a reconstructed line from an .eml file."""
+    """Gets data from a reconstructed line from an EML."""
     line = line.replace("\n", "").replace("\t", "")
     # format is "alias, <email>"; log the alias unless there isn't one
     if line.startswith("From:"):
